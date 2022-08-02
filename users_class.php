@@ -95,11 +95,12 @@ class _account {
 		$conn->link = $conn->connect();
 
 		if(session_status() == PHP_SESSION_ACTIVE){
-			if($stmt = $conn->link->prepare("REPLACE INTO users_sessions (session_id, user_id, login_time, user_agent, user_OS) VALUES (?, ?, NOW(), ?, ?)")){
-				$stmt->bind_param('siss', $session, $userid, $user_agent, $user_OS);
+			if($stmt = $conn->link->prepare("REPLACE INTO users_sessions (session_id, user_id, login_time, user_agent, user_browser, user_OS) VALUES (?, ?, NOW(), ?, ?, ?)")){
+				$stmt->bind_param('sisss', $session, $userid, $user_agent, $user_browser, $user_OS);
 				$session = session_id();
 				$userid = $this->id;
 				$user_agent = $_SERVER['HTTP_USER_AGENT'];
+				$user_browser = $browser->getName() .' '. $browser->getVersion();
 				$user_OS = $browser->getPlatform() .' '. $browser->getPlatformVersion(true);
 
 				/*
@@ -383,12 +384,12 @@ class _account {
 		return TRUE;
 	}
 
-	public function addUser(string $username, string $name, string $email, string $password, string $permissions, string $active): bool {
+	public function addUser(string $username, string $name, string $email, string $password, string $active): bool {
 		global $conn;
 		$conn->link = $conn->connect();
 
-		if($stmt = $conn->link->prepare("INSERT INTO users (username, name, email, password, permissions, active) VALUES (?, ?, ?, ?, ?, ?)")){
-			$stmt->bind_param('ssssii', $username, $name, $email, $hash, $permissions, $active);
+		if($stmt = $conn->link->prepare("INSERT INTO users (username, name, email, password, active) VALUES (?, ?, ?, ?, ?)")){
+			$stmt->bind_param('ssssi', $username, $name, $email, $hash, $active);
 
 			$username = stripslashes($username);
 
@@ -398,8 +399,6 @@ class _account {
 
 			$password = stripslashes($password);
 			$hash = password_hash($password, PASSWORD_DEFAULT);
-
-			$permissions = stripslashes($permissions);
 
 			$active = stripslashes($active);
 
@@ -431,21 +430,41 @@ class _account {
 		return false;
 	}
 
-	public function changePassword(string $id, string $password): bool {
+	public function changePassword(string $id, string $new, string $old): bool {
 		global $conn;
 		$conn->link = $conn->connect();
 
-		if($stmt = $conn->link->prepare("UPDATE users SET password = ? WHERE id = ?")){
-			$stmt->bind_param('si', $hash, $id);
+		$id = stripslashes($id);
+		$old = stripslashes($old);
 
-			$id = stripslashes($id);
+		$new = stripslashes($new);
+		$newHash = password_hash($new, PASSWORD_DEFAULT);
 
-			$password = stripslashes($password);
-			$hash = password_hash($password, PASSWORD_DEFAULT);
-
+		if($stmt = $conn->link->prepare("SELECT password FROM users WHERE id = ?")){
+			$stmt->bind_param('i', $id);
 			try{
 				$stmt->execute();
-				
+				$stmt->store_result();
+			}
+			catch(Exception $e){
+				throw new Exception('Erro ao conectar com a base de dados: '. $e);
+				die();
+			}
+			if($stmt->num_rows > 0){
+				$stmt->bind_result($oldHash);
+				$stmt->fetch();
+
+				if(!password_verify($old, $oldHash)){
+					throw new Exception('<p class="pill-notification popup popup-red">A senha antiga que você digitou não é válida.</p>');
+				}
+			}
+		}
+
+		if($stmt = $conn->link->prepare("UPDATE users SET password = ? WHERE id = ?")){
+			$stmt->bind_param('si', $newHash, $id);
+
+			try{
+				$stmt->execute();	
 			}
 			catch(Exception $e){
 				throw new Exception('Erro ao conectar com a base de dados: '. $e);
