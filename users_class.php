@@ -34,13 +34,13 @@ class _account {
 				}
 				catch(Exception $e){
 					throw new Exception('Erro ao conectar com a base de dados: '. $e);
+					die();
 				}
 				if($stmt->num_rows > 0){
 					$stmt->bind_result($db_account_id, $db_account_password);
 					$stmt->fetch();
 
 					if(password_verify($password, $db_account_password)){
-						session_regenerate_id();
 
 						$_SESSION['loggedin'] = TRUE;
 						$_SESSION['id'] = $db_account_id;
@@ -75,12 +75,12 @@ class _account {
 						return TRUE;
 					} else{
 						$stmt->close();
-						$conn->disconnect($conn->link);
+						$conn->close($conn->link);
 						throw new Exception(ERROR_LOGIN_PASSWORD);
 					}
 				} else{
 					$stmt->close();
-					$conn->disconnect($conn->link);
+					$conn->close($conn->link);
 					throw new Exception(ERROR_LOGIN_USERNAME);
 				}
 			}
@@ -116,9 +116,10 @@ class _account {
 				}
 				catch(Exception $e){
 					throw new Exception('Erro ao conectar com a base de dados: '. $e);
+					die();
 				}
 				$stmt->close();
-				$conn->disconnect($conn->link);
+				$conn->close($conn->link);
 				return TRUE;
 			}
 		}
@@ -139,13 +140,14 @@ class _account {
 			}
 			catch(Exception $e){
 				throw new Exception('Erro ao conectar com a base de dados: '. $e);
+				die();
 			}
 			$stmt->close();
-			$conn->disconnect($conn->link);
+			$conn->close($conn->link);
 			return TRUE;
 		}
 		$stmt->close();
-		$conn->disconnect($conn->link);
+		$conn->close($conn->link);
 		return FALSE;
 	}
 
@@ -183,6 +185,7 @@ class _account {
 				}
 				catch(Exception $e){
 					throw new Exception('Erro ao conectar com a base de dados: '. $e);
+					die();
 				}
 				if($stmt->num_rows > 0){
 
@@ -208,7 +211,7 @@ class _account {
 					$this->logout();
 				}
 				$stmt->close();
-				$conn->disconnect($conn->link);
+				$conn->close($conn->link);
 			}
 			$this->logout();
 		}
@@ -243,6 +246,7 @@ class _account {
 			}
 			catch(Exception $e){
 				throw new Exception('Error Processing Request: '. $e);
+				die();
 			}
 			return $user_active;
 		}
@@ -275,12 +279,13 @@ class _account {
 				}
 				catch(Exception $e){
 					throw new Exception('Erro ao conectar com a base de dados: '. $e);
+					die();
 				}
 				session_unset();
 				session_destroy();
 
 				$stmt->close();
-				$conn->disconnect($conn->link);
+				$conn->close($conn->link);
 			}
 			echo '<script>window.location = "./cpanel?return='.($this->getFileName()).'";</script>';
 		} else {
@@ -338,20 +343,21 @@ class _account {
 				}
 				catch(Exception $e){
 					throw new Exception('Erro ao conectar com a base de dados: '. $e);
+					die();
 				}
 				//session_unset();
 				//session_destroy();
 				$stmt->close();
-				$conn->disconnect($conn->link);
+				$conn->close($conn->link);
 			}
 		}
 		return TRUE;
 	}
 
-	public function closeAllSessionsFrom($id){
+	public function closeAllSessions(){
 		global $conn;		
 		$conn->link = $conn->connect();
-		$id = stripslashes($id);
+		$id = stripslashes($this->id);
 
 		if(is_null($this->id)){
 			return;
@@ -366,11 +372,12 @@ class _account {
 				}
 				catch(Exception $e){
 					throw new Exception('Erro ao conectar com a base de dados: '. $e);
+					die();
 				}
 				//session_unset();
 				//session_destroy();
 				$stmt->close();
-				$conn->disconnect($conn->link);
+				$conn->close($conn->link);
 			}
 		}
 		return TRUE;
@@ -414,13 +421,14 @@ class _account {
 			}
 			catch(Exception $e){
 				throw new Exception('Erro ao conectar com a base de dados: '. $e);
+				die();
 			}
 			$stmt->close();
-			$conn->disconnect($conn->link);
+			$conn->close($conn->link);
 			return TRUE;
 		}
-		$stmt->close();
-		$conn->disconnect($conn->link);
+		$conn->close($conn->link);
+		return false;
 	}
 
 	public function changePassword(string $id, string $password): bool {
@@ -441,13 +449,14 @@ class _account {
 			}
 			catch(Exception $e){
 				throw new Exception('Erro ao conectar com a base de dados: '. $e);
+				die();
 			}
 			$stmt->close();
-			$conn->disconnect($conn->link);
+			$conn->close($conn->link);
 			return TRUE;
 		}
 		$stmt->close();
-		$conn->disconnect($conn->link);
+		$conn->close($conn->link);
 	}
 
 	public function rmvUser(string $username, string $user_id): bool {
@@ -467,6 +476,7 @@ class _account {
 			}
 			catch(Exception $e){
 				throw new Exception('Erro ao conectar com a base de dados: '. $e);
+				die();
 			}
 			return TRUE;
 		}
@@ -518,6 +528,7 @@ class _account {
 			}
 			catch(Exception $e){
 				throw new Exception('Erro ao conectar com a base de dados: '. $e);
+				die();
 			}
 
 			if($stmt->num_rows > 0){
