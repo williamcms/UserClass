@@ -292,6 +292,33 @@ class _account {
 		echo '<script>window.location = "./cpanel?return='.($this->getFileName()).'";</script>';
 	}
 
+	public function closeThisSession($session_number){
+		global $conn;		
+		$conn->link = $conn->connect();
+
+		if(is_null($this->id)){
+			return;
+		}
+
+		if(session_status() == PHP_SESSION_ACTIVE){
+			if($stmt = $conn->link->prepare("DELETE FROM users_sessions WHERE session_number = ? AND user_id = ?")){
+				$stmt->bind_param('si', $session_number, $user_id);
+				$user_id = $this->id;
+
+				try{
+					$stmt->execute();
+				}
+				catch(Exception $e){
+					throw new Exception('Erro ao conectar com a base de dados: '. $e);
+					die();
+				}
+				$stmt->close();
+				$conn->close($conn->link);
+			}
+		}
+		return TRUE;
+	}
+
 	public function closeOtherSessions(){
 		global $conn;		
 		$conn->link = $conn->connect();
